@@ -8,9 +8,16 @@ from time import *
 import time
 import threading
 
-gpsd = None #seting the global variable
+from flask import Flask
+from flask import render_template
 
-os.system('clear') #clear the terminal (optional)
+
+app = Flask(__name__)
+gpsd = None #seting the global variable
+previous_latitude = 0
+previous_longitude = 0
+
+def isnan(x): return str(x) == 'nan'
 
 class GpsPoller(threading.Thread):
   def __init__(self):
@@ -25,35 +32,30 @@ class GpsPoller(threading.Thread):
     while gpsp.running:
       gpsd.next() #this will continue to loop and grab EACH set of gpsd info to clear the buffer
 
+
+@app.route('/map')
+def app_map():
+  global previous_latitude, previous_longitude
+  infos = ', '.join(map(lambda s: str(s), gpsd.satellites))
+
+  if not isnan(gpsd.fix.latitude):
+    previous_latitude = gpsd.fix.latitude
+
+  if not isnan(gpsd.fix.longitude):
+    previous_longitude = gpsd.fix.longitude
+
+  return render_template('map.html',
+      latitude=previous_latitude,
+      longitude=previous_longitude,
+      informations=infos)
+
+
 if __name__ == '__main__':
   gpsp = GpsPoller() # create the thread
+
   try:
     gpsp.start() # start it up
-    while True:
-      #It may take a second or two to get good data
-      #print gpsd.fix.latitude,', ',gpsd.fix.longitude,'  Time: ',gpsd.utc
-
-      os.system('clear')
-
-      print
-      print ' GPS reading'
-      print '----------------------------------------'
-      print 'latitude    ' , gpsd.fix.latitude
-      print 'longitude   ' , gpsd.fix.longitude
-      print 'time utc    ' , gpsd.utc,' + ', gpsd.fix.time
-      print 'altitude (m)' , gpsd.fix.altitude
-      print 'eps         ' , gpsd.fix.eps
-      print 'epx         ' , gpsd.fix.epx
-      print 'epv         ' , gpsd.fix.epv
-      print 'ept         ' , gpsd.fix.ept
-      print 'speed (m/s) ' , gpsd.fix.speed
-      print 'climb       ' , gpsd.fix.climb
-      print 'track       ' , gpsd.fix.track
-      print 'mode        ' , gpsd.fix.mode
-      print
-      print 'sats        ' , gpsd.satellites
-
-      time.sleep(5) #set to whatever
+    app.run(debug=True)
 
   except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
     print "\nKilling Thread..."

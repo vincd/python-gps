@@ -3,7 +3,7 @@ Python-GPS
 
 # Installation
 ## macos
-Download and install the driver on Prolific website (http://www.prolific.com.tw/US/ShowProduct.aspx?p_id=229&pcid=41)
+Download and install the driver on Prolific [website](http://www.prolific.com.tw/US/ShowProduct.aspx?p_id=229&pcid=41)
 After the reboot, the USB stick should be listed as `/dev/tty.usbserial`
 To install the deamon, run the following command line:
 ```
